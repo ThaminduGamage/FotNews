@@ -1,68 +1,86 @@
 package com.example.fot_news_myapp.fragments;
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.util.Log;
 
-import com.example.fot_news_myapp.R;  // Corrected the import
-import com.example.fot_news_myapp.adapters.ArticleAdapter;  // Corrected the import
-import com.example.fot_news_myapp.models.Article;  // Corrected the import
+import com.example.fot_news_myapp.R;
+import com.example.fot_news_myapp.adapters.ArticleAdapter;
+import com.example.fot_news_myapp.models.Article;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SportsFragment extends Fragment implements ArticleAdapter.OnReadMoreClickListener {
+public class SportsFragment extends Fragment {
 
-    private RecyclerView recyclerView;
-    private ArticleAdapter adapter;
+    private static final String TAG = "SportsFragment";
+    private RecyclerView recyclerViewSports;
+    private ArticleAdapter articleAdapter;
     private List<Article> articleList;
+
+    public SportsFragment() {
+        // Required empty public constructor
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_sports, container, false);
 
-        recyclerView = view.findViewById(R.id.recyclerViewSports);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerViewSports = view.findViewById(R.id.recyclerViewSports);
+        recyclerViewSports.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Initialize the event list without images
         articleList = new ArrayList<>();
-        articleList.add(new Article(
-                "Public Debt in Japan and Its Implications for Sri Lanka...",
-                "The third lecture in the JICA Chair Programme series took place...",
-                "Dec 25, 2024"
-        ));
-        articleList.add(new Article(
-                "Towards a Green Horizon: Japan's Journey...",
-                "Exploring Japan's strategy for carbon neutrality...",
-                "Dec 20, 2024"
-        ));
+        articleAdapter = new ArticleAdapter(articleList, article -> {
+            if (getActivity() != null) {
+                getActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer,
+                                // CORRECTED: Pass article.getImageResId() (String) instead of 0 (int)
+                                ArticleDetailFragment.newInstance(article.getTitle(), article.getDate(), article.getSummary(), article.getImageResId()))
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
 
-        adapter = new ArticleAdapter(articleList, this);
-        recyclerView.setAdapter(adapter);
+        recyclerViewSports.setAdapter(articleAdapter);
+        fetchSportsNewsFromFirebase();
 
         return view;
     }
 
-    @Override
-    public void onReadMoreClick(Article article) {
-        // Handle the "Read More" click event
-        ArticleDetailFragment detailFragment = ArticleDetailFragment.newInstance(
-                article.getTitle(),
-                article.getDate(),
-                article.getSummary() // No image URL needed anymore
-        );
+    private void fetchSportsNewsFromFirebase() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("categories/sports");
 
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragmentContainer, detailFragment)
-                .addToBackStack(null)
-                .commit();
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                articleList.clear();
+                for (DataSnapshot articleSnapshot : dataSnapshot.getChildren()) {
+                    Article article = articleSnapshot.getValue(Article.class);
+                    if (article != null) {
+                        articleList.add(article);
+                    } else {
+                        Log.e(TAG, "Failed to parse article: " + articleSnapshot.getKey());
+                    }
+                }
+                articleAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Failed to read value.", databaseError.toException());
+            }
+        });
     }
 }

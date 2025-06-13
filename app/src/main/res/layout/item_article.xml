@@ -45,14 +45,5 @@
             android:textColor="#888888"
             android:layout_marginTop="8dp" />
 
-        <TextView
-            android:id="@+id/readMore"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Read More"
-            android:textColor="@android:color/holo_blue_light"
-            android:layout_marginTop="8dp"
-            android:clickable="true"
-            android:focusable="true" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

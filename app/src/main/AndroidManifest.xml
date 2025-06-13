@@ -40,7 +40,8 @@
             android:exported="false" />
         <activity
             android:name=".userinfoActivity"
-            android:exported="false" />
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"> </activity>
 
     </application>
 

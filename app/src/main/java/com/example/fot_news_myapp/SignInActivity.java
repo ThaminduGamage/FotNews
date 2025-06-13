@@ -8,14 +8,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignInActivity extends AppCompatActivity {
 
@@ -23,22 +21,18 @@ public class SignInActivity extends AppCompatActivity {
     private Button signInButton;
     private TextView haveAccountLogin;
     private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_sing_in);
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // Set up the window insets to prevent UI elements from being hidden behind system bars
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.sign_in), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        // Initialize Firebase Realtime Database reference
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
         // Initialize Views
         usernameEditText = findViewById(R.id.username);
@@ -64,9 +58,10 @@ public class SignInActivity extends AppCompatActivity {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
         String confirmPassword = confirmPasswordEditText.getText().toString().trim();
+        String username = usernameEditText.getText().toString().trim();
 
         // Validate inputs
-        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || username.isEmpty()) {
             Toast.makeText(SignInActivity.this, "Please fill all fields.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -82,7 +77,12 @@ public class SignInActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // If sign-up is successful, sign the user in
                         FirebaseUser user = mAuth.getCurrentUser();
-                        updateUI(user);
+
+                        // Add user information to Firebase Realtime Database
+                        if (user != null) {
+                            saveUserToDatabase(user, username, email);
+                        }
+
                     } else {
                         // If sign-up fails, display a message to the user
                         Exception exception = task.getException();
@@ -91,13 +91,51 @@ public class SignInActivity extends AppCompatActivity {
                 });
     }
 
-    // Update UI based on the current user
+    // Save user data to Firebase Realtime Database
+    private void saveUserToDatabase(FirebaseUser user, String username, String email) {
+        // Create a User object
+        User newUser = new User(username, email);
+
+        // Save the user data in Realtime Database under the user's UID
+        mDatabase.child("users").child(user.getUid()).setValue(newUser)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // After successful sign-up, go to the Login Activity
+                        goToLoginActivity();
+                    } else {
+                        Toast.makeText(SignInActivity.this, "Failed to save user info.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Navigate to Login Activity
+    private void goToLoginActivity() {
+        // Create an Intent to navigate to LoginActivity
+        Intent intent = new Intent(SignInActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish(); // Close the current SignInActivity
+    }
+
+    // Update UI (Not needed anymore for this use case)
     private void updateUI(FirebaseUser user) {
         if (user != null) {
-            // Go to the Main Activity after successful sign-up/sign-in
-            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish(); // Close the SignInActivity
+            // Go to the Login Activity after successful registration
+            goToLoginActivity();
         }
+    }
+}
+
+// User model class to store user information
+class User {
+    public String username;
+    public String email;
+
+    // Default constructor required for calls to DataSnapshot.getValue(User.class)
+    public User() {
+    }
+
+    public User(String username, String email) {
+        this.username = username;
+        this.email = email;
     }
 }

@@ -4,18 +4,20 @@ public class Article {
     private String title;
     private String summary;
     private String date;
+    private String imageResId; // Stores the URL of the image
 
-    // Default constructor (required for Firebase or other uses)
-    public Article() {}
+    // Required no-argument constructor for Firebase deserialization
+    public Article() {
+        // Default constructor required for calls to DataSnapshot.getValue(Article.class)
+    }
 
-    // Constructor to match your Firebase data structure
-    public Article(String title, String summary, String date) {
+    public Article(String title, String summary, String date, String imageResId) {
         this.title = title;
         this.summary = summary;
         this.date = date;
+        this.imageResId = imageResId;
     }
 
-    // Getter methods
     public String getTitle() {
         return title;
     }
@@ -28,7 +30,11 @@ public class Article {
         return date;
     }
 
-    // Setter methods (optional, for Firebase deserialization or updating data)
+    public String getImageResId() { // Getter for image URL
+        return imageResId;
+    }
+
+    // Setters (optional, but good practice if you plan to modify articles)
     public void setTitle(String title) {
         this.title = title;
     }
@@ -39,5 +45,9 @@ public class Article {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public void setImageResId(String imageResId) {
+        this.imageResId = imageResId;
     }
 }
