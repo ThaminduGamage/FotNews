@@ -27,7 +27,7 @@ public class EventsFragment extends Fragment {
     private static final String TAG = "EventsFragment";
     private RecyclerView recyclerViewEvents;
     private ArticleAdapter articleAdapter;
-    private List<Article> eventList;
+    private List<Article> eventList; // Renamed for clarity in this fragment
 
     public EventsFragment() {
         // Required empty public constructor
@@ -40,15 +40,17 @@ public class EventsFragment extends Fragment {
 
         recyclerViewEvents = view.findViewById(R.id.recyclerViewEvents);
         recyclerViewEvents.setLayoutManager(new LinearLayoutManager(getContext()));
-
         eventList = new ArrayList<>();
+
+        // Initialize adapter with a click listener
         articleAdapter = new ArticleAdapter(eventList, article -> {
             if (getActivity() != null) {
+                // Navigate to ArticleDetailFragment when "Read More" is clicked
                 getActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer,
-                                // CORRECTED: Pass article.getImageResId() (String) instead of 0 (int)
+                        .replace(R.id.fragmentContainer, // Assuming R.id.fragmentContainer is where your fragments are displayed
+                                // Pass the imageResId (URL) to the detail fragment
                                 ArticleDetailFragment.newInstance(article.getTitle(), article.getDate(), article.getSummary(), article.getImageResId()))
-                        .addToBackStack(null)
+                        .addToBackStack(null) // Allows going back to the list fragment
                         .commit();
             }
         });
@@ -65,7 +67,7 @@ public class EventsFragment extends Fragment {
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                eventList.clear();
+                eventList.clear(); // Clear existing data to avoid duplicates
                 for (DataSnapshot eventSnapshot : dataSnapshot.getChildren()) {
                     Article event = eventSnapshot.getValue(Article.class);
                     if (event != null) {
@@ -74,7 +76,7 @@ public class EventsFragment extends Fragment {
                         Log.e(TAG, "Failed to parse event article: " + eventSnapshot.getKey());
                     }
                 }
-                articleAdapter.notifyDataSetChanged();
+                articleAdapter.notifyDataSetChanged(); // Notify adapter that data has changed
             }
 
             @Override

@@ -4,7 +4,7 @@ public class Article {
     private String title;
     private String summary;
     private String date;
-    private String imageResId; // Stores the URL of the image
+    private String imageResId; // Stores the URL of the image (e.g., gs://bucket/path/to/image.png)
 
     // Required no-argument constructor for Firebase deserialization
     public Article() {

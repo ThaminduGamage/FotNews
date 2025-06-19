@@ -40,15 +40,16 @@ public class AcademicFragment extends Fragment {
 
         recyclerViewAcademic = view.findViewById(R.id.recyclerViewAcademic);
         recyclerViewAcademic.setLayoutManager(new LinearLayoutManager(getContext()));
-
         articleList = new ArrayList<>();
+
+        // Initialize adapter with a click listener
         articleAdapter = new ArticleAdapter(articleList, article -> {
             if (getActivity() != null) {
+                // Navigate to ArticleDetailFragment when "Read More" is clicked
                 getActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer,
-                                // CORRECTED: Pass article.getImageResId() (String) instead of 0 (int)
+                        .replace(R.id.fragmentContainer, // Assuming R.id.fragmentContainer is where your fragments are displayed
                                 ArticleDetailFragment.newInstance(article.getTitle(), article.getDate(), article.getSummary(), article.getImageResId()))
-                        .addToBackStack(null)
+                        .addToBackStack(null) // Allows going back to the list fragment
                         .commit();
             }
         });
@@ -66,7 +67,7 @@ public class AcademicFragment extends Fragment {
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                articleList.clear();
+                articleList.clear(); // Clear existing data to avoid duplicates
                 for (DataSnapshot articleSnapshot : dataSnapshot.getChildren()) {
                     Article article = articleSnapshot.getValue(Article.class);
                     if (article != null) {
@@ -75,7 +76,7 @@ public class AcademicFragment extends Fragment {
                         Log.e(TAG, "Failed to parse academic article: " + articleSnapshot.getKey());
                     }
                 }
-                articleAdapter.notifyDataSetChanged();
+                articleAdapter.notifyDataSetChanged(); // Notify adapter that data has changed
             }
 
             @Override

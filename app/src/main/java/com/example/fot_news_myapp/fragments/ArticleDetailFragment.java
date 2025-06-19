@@ -6,11 +6,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.util.Log; // Import Log for error logging
 
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.fot_news_myapp.R;
+import com.google.firebase.storage.FirebaseStorage; // Import FirebaseStorage
+import com.google.firebase.storage.StorageReference; // Import StorageReference
+
 
 public class ArticleDetailFragment extends Fragment {
 
@@ -57,11 +61,40 @@ public class ArticleDetailFragment extends Fragment {
         summaryView.setText(summary);
 
         if (detailImageView != null && imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(this)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.placrholder_image)
-                    .error(R.drawable.error_images)
-                    .into(detailImageView);
+            // Check if the URI is a Firebase Storage gs:// URI
+            if (imageUrl.startsWith("gs://")) {
+                try {
+                    // Create a StorageReference from the gs:// URI
+                    StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl);
+
+                    // Get the download URL asynchronously
+                    storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                        // Load the image using Glide with the obtained download URL
+                        Glide.with(this)
+                                .load(uri) // Load the direct download URL
+                                .placeholder(R.drawable.placrholder_image)
+                                .error(R.drawable.error_images)
+                                .into(detailImageView);
+                    }).addOnFailureListener(exception -> {
+                        // Handle any errors
+                        Log.e("ArticleDetailFragment", "Failed to get download URL: " + exception.getMessage());
+                        detailImageView.setImageResource(R.drawable.error_images); // Show error image
+                    });
+                } catch (IllegalArgumentException e) {
+                    Log.e("ArticleDetailFragment", "Invalid Firebase Storage URL: " + imageUrl + " - " + e.getMessage());
+                    detailImageView.setImageResource(R.drawable.error_images); // Show error image for invalid URL
+                }
+            } else {
+                // If it's a regular HTTP/HTTPS URL (or any other type not gs://)
+                Glide.with(this)
+                        .load(imageUrl)
+                        .placeholder(R.drawable.placrholder_image)
+                        .error(R.drawable.error_images)
+                        .into(detailImageView);
+            }
+        } else {
+            // If imageUrl is null or empty, set the error image or placeholder
+            detailImageView.setImageResource(R.drawable.placrholder_image);
         }
 
         return view;

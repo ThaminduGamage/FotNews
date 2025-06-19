@@ -26,7 +26,7 @@ public class SportsFragment extends Fragment {
     private static final String TAG = "SportsFragment";
     private RecyclerView recyclerViewSports;
     private ArticleAdapter articleAdapter;
-    private List<Article> articleList;
+    private List<Article> articleList; // Renamed for clarity in this fragment
 
     public SportsFragment() {
         // Required empty public constructor
@@ -39,15 +39,17 @@ public class SportsFragment extends Fragment {
 
         recyclerViewSports = view.findViewById(R.id.recyclerViewSports);
         recyclerViewSports.setLayoutManager(new LinearLayoutManager(getContext()));
-
         articleList = new ArrayList<>();
+
+        // Initialize adapter with a click listener
         articleAdapter = new ArticleAdapter(articleList, article -> {
             if (getActivity() != null) {
+                // Navigate to ArticleDetailFragment when "Read More" is clicked
                 getActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer,
-                                // CORRECTED: Pass article.getImageResId() (String) instead of 0 (int)
+                        .replace(R.id.fragmentContainer, // Assuming R.id.fragmentContainer is where your fragments are displayed
+                                // Pass the imageResId (URL) to the detail fragment
                                 ArticleDetailFragment.newInstance(article.getTitle(), article.getDate(), article.getSummary(), article.getImageResId()))
-                        .addToBackStack(null)
+                        .addToBackStack(null) // Allows going back to the list fragment
                         .commit();
             }
         });
@@ -65,7 +67,7 @@ public class SportsFragment extends Fragment {
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                articleList.clear();
+                articleList.clear(); // Clear existing data to avoid duplicates
                 for (DataSnapshot articleSnapshot : dataSnapshot.getChildren()) {
                     Article article = articleSnapshot.getValue(Article.class);
                     if (article != null) {
@@ -74,7 +76,7 @@ public class SportsFragment extends Fragment {
                         Log.e(TAG, "Failed to parse article: " + articleSnapshot.getKey());
                     }
                 }
-                articleAdapter.notifyDataSetChanged();
+                articleAdapter.notifyDataSetChanged(); // Notify adapter that data has changed
             }
 
             @Override
